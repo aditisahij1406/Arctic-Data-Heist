@@ -9,87 +9,71 @@
 
 <body>
 
-<div id="startScreen">
-    <div class="title">ARCTIC DATA HEIST</div>
+    <div id="startScreen">
+        <div class="title">ARCTIC DATA HEIST</div>
 
-    <div class="subtitle">
-        RECOVER THE LOST RESEARCH
-    </div>
+        <div class="subtitle">
+            RECOVER THE LOST RESEARCH
+        </div>
 
-    <div class="mission">
-        <p>Three animal files have been corrupted.</p>
-        <p>Find them. Solve their puzzles. Recover the data.</p>
-    </div>
+        <div class="mission">
+            <p>Three animal files have been corrupted.</p>
+            <p>Find them. Solve their puzzles. Recover the data.</p>
+        </div>
 
-    <button id="startButton">START EXPEDITION</button>
-
-    <div class="controls">
-        WASD — MOVE &nbsp; • &nbsp; MOUSE — LOOK &nbsp; • &nbsp; E — INVESTIGATE
-    </div>
-</div>
-
-<div id="hud">
-
-    <div class="hudTitle">
-        ❄ ARCTIC DATA HEIST
-    </div>
-
-    <div>
-        DATA
-        <span id="data">0</span>/3
-    </div>
-
-    <div>
-        SCORE
-        <span id="score">0</span>
-    </div>
-
-    <div>
-        TIME
-        <span id="time">90</span>
-    </div>
-
-</div>
-
-<div id="crosshair">+</div>
-
-<div id="message"></div>
-
-<div id="puzzle">
-
-    <div id="puzzleCard">
-
-        <div id="animalName"></div>
-
-        <div id="question"></div>
-
-        <div id="answers"></div>
-
-        <div id="fact"></div>
-
-        <button id="continueButton">
-            CONTINUE
+        <button id="startButton">
+            START EXPEDITION
         </button>
 
+        <div class="controls">
+            WASD — MOVE &nbsp; • &nbsp; MOUSE — LOOK &nbsp; • &nbsp; E — INVESTIGATE
+        </div>
     </div>
 
-</div>
+    <div id="hud">
+        <div class="hudTitle">❄ ARCTIC DATA HEIST</div>
 
-<div id="gameOver">
+        <div>DATA <span id="data">0</span>/3</div>
 
-    <div class="gameOverTitle">
-        RESEARCH COMPLETE
+        <div>SCORE <span id="score">0</span></div>
+
+        <div>TIME <span id="time">90</span></div>
     </div>
 
-    <div id="finalScore"></div>
+    <div id="crosshair">+</div>
 
-    <button onclick="location.reload()">
-        NEW EXPEDITION
-    </button>
+    <div id="puzzle">
+        <div id="puzzleCard">
 
-</div>
+            <div id="animalName"></div>
 
-<script type="module" src="game.js"></script>
+            <div id="question"></div>
+
+            <div id="answers"></div>
+
+            <div id="fact"></div>
+
+            <button id="continueButton">
+                CONTINUE
+            </button>
+
+        </div>
+    </div>
+
+    <div id="gameOver">
+        <div class="gameOverTitle">
+            RESEARCH COMPLETE
+        </div>
+
+        <div id="finalScore"></div>
+
+        <button onclick="location.reload()">
+            NEW EXPEDITION
+        </button>
+    </div>
+
+    <!-- IMPORTANT: load game.js as a module -->
+    <script type="module" src="./game.js"></script>
 
 </body>
 </html>
