@@ -1,12 +1,18 @@
+import * as THREE from "three";
+
+import {
+    GLTFLoader
+} from "three/addons/loaders/GLTFLoader.js";
+
+
 /* =====================================================
    ARCTIC DATA HEIST
-   First-person mini game
    ===================================================== */
 
 
-/* =========================
-   GAME VARIABLES
-========================= */
+/* =====================================================
+   GAME STATE
+===================================================== */
 
 let gameStarted = false;
 let gameFinished = false;
@@ -18,41 +24,45 @@ let timeLeft = 90;
 
 let activePuzzle = null;
 
+let timerStarted = false;
 
-/* =========================
+
+/* =====================================================
    THREE.JS SETUP
-========================= */
+===================================================== */
 
 const scene =
     new THREE.Scene();
 
+
 scene.background =
     new THREE.Color(
-        0x9bd9ea
+        0x8fcbdc
     );
+
 
 scene.fog =
     new THREE.Fog(
-        0x9bd9ea,
-        20,
-        100
+        0x8fcbdc,
+        35,
+        130
     );
 
 
 const camera =
     new THREE.PerspectiveCamera(
-        75,
+        72,
         window.innerWidth /
         window.innerHeight,
         0.1,
-        200
+        300
     );
 
 
 camera.position.set(
     0,
     2,
-    15
+    14
 );
 
 
@@ -76,491 +86,823 @@ renderer.setPixelRatio(
 );
 
 
+renderer.outputColorSpace =
+    THREE.SRGBColorSpace;
+
+
+renderer.shadowMap.enabled =
+    true;
+
+
+renderer.shadowMap.type =
+    THREE.PCFSoftShadowMap;
+
+
 document.body.appendChild(
     renderer.domElement
 );
 
 
-/* =========================
-   LIGHT
-========================= */
+/* =====================================================
+   LIGHTING
+===================================================== */
 
-const ambientLight =
+const skyLight =
     new THREE.HemisphereLight(
-        0xdff7ff,
-        0x40535a,
-        2
+        0xdaf7ff,
+        0x35464e,
+        2.2
     );
 
+
 scene.add(
-    ambientLight
+    skyLight
 );
 
 
-const sunlight =
+const sun =
     new THREE.DirectionalLight(
         0xffffff,
-        2.5
-    );
-
-sunlight.position.set(
-    20,
-    40,
-    10
-);
-
-scene.add(
-    sunlight
-);
-
-
-/* =========================
-   GROUND
-========================= */
-
-const ground =
-    new THREE.Mesh(
-
-        new THREE.PlaneGeometry(
-            150,
-            150
-        ),
-
-        new THREE.MeshStandardMaterial({
-            color: 0xe7f5f8,
-            roughness: 1
-        })
-
+        3
     );
 
 
-ground.rotation.x =
-    -Math.PI / 2;
+sun.position.set(
+    -30,
+    60,
+    20
+);
+
+
+sun.castShadow =
+    true;
+
+
+sun.shadow.mapSize.width =
+    2048;
+
+
+sun.shadow.mapSize.height =
+    2048;
 
 
 scene.add(
-    ground
+    sun
 );
 
 
-/* =========================
-   MOUNTAINS
-========================= */
+/* =====================================================
+   GLB LOADER
+===================================================== */
 
-function makeMountain(
-    x,
-    z,
-    size
+const loader =
+    new GLTFLoader();
+
+
+const loadedAssets =
+    {};
+
+
+function loadModel(
+    filename
 ) {
 
-    const mountain =
-        new THREE.Mesh(
+    return new Promise(
+        (resolve, reject) => {
 
-            new THREE.ConeGeometry(
-                size,
-                size * 2,
-                7
-            ),
+            loader.load(
 
-            new THREE.MeshStandardMaterial({
-                color: 0xb7d4dc
-            })
+                `./assets/${filename}`,
 
-        );
+                gltf => {
+
+                    const model =
+                        gltf.scene;
 
 
-    mountain.position.set(
-        x,
-        size,
-        z
+                    model.traverse(
+                        object => {
+
+                            if (
+                                object.isMesh
+                            ) {
+
+                                object.castShadow =
+                                    true;
+
+                                object.receiveShadow =
+                                    true;
+
+                            }
+
+                        }
+                    );
+
+
+                    loadedAssets[
+                        filename
+                    ] = model;
+
+
+                    resolve(model);
+
+                },
+
+                undefined,
+
+                error => {
+
+                    console.error(
+                        "Could not load:",
+                        filename,
+                        error
+                    );
+
+                    reject(error);
+
+                }
+
+            );
+
+        }
     );
 
-
-    scene.add(
-        mountain
-    );
 }
 
 
-makeMountain(
-    -35,
-    -40,
-    18
-);
+/* =====================================================
+   CLONE MODEL
+===================================================== */
 
-makeMountain(
-    0,
-    -50,
-    22
-);
-
-makeMountain(
-    35,
-    -40,
-    17
-);
-
-
-/* =========================
-   TREES
-========================= */
-
-function makeTree(
-    x,
-    z
+function cloneAsset(
+    filename
 ) {
 
-    const group =
-        new THREE.Group();
+    if (
+        !loadedAssets[filename]
+    ) {
 
-
-    const trunk =
-        new THREE.Mesh(
-
-            new THREE.CylinderGeometry(
-                .3,
-                .5,
-                3
-            ),
-
-            new THREE.MeshStandardMaterial({
-                color: 0x4c372b
-            })
-
+        console.error(
+            "Asset not loaded:",
+            filename
         );
 
+        return null;
 
-    trunk.position.y =
-        1.5;
+    }
 
 
-    group.add(
-        trunk
+    const clone =
+        loadedAssets[
+            filename
+        ].clone(true);
+
+
+    clone.traverse(
+        object => {
+
+            if (
+                object.isMesh
+            ) {
+
+                object.castShadow =
+                    true;
+
+                object.receiveShadow =
+                    true;
+
+            }
+
+        }
     );
 
 
-    const leaves =
-        new THREE.Mesh(
-
-            new THREE.ConeGeometry(
-                2.3,
-                6,
-                7
-            ),
-
-            new THREE.MeshStandardMaterial({
-                color: 0x2e5c58
-            })
-
-        );
+    return clone;
+}
 
 
-    leaves.position.y =
-        5;
+/* =====================================================
+   LOAD ALL ASSETS
+===================================================== */
+
+const assetFiles = [
+
+    "polar_bear.glb",
+    "caribou.glb",
+    "arctic_wolf.glb",
+
+    "pine_tree.glb",
+    "dead_tree.glb",
+
+    "snow_rock.glb",
+    "ice_chunk.glb",
+    "ice_spire.glb",
+    "snow_bush.glb",
+
+    "crate.glb",
+    "supply_box.glb",
+    "fuel_barrel.glb",
+    "lamp_post.glb",
+    "satellite_dish.glb",
+
+    "research_station.glb",
+    "watch_tower.glb",
+    "data_terminal.glb",
+
+    "ice_wall.glb",
+    "snow_ground.glb",
+    "ice_cave.glb",
+    "frozen_lake.glb",
+
+    "mountain_bg.glb",
+    "skybox.glb"
+
+];
 
 
-    group.add(
-        leaves
+/* =====================================================
+   ENVIRONMENT
+===================================================== */
+
+function addAsset(
+    filename,
+    position,
+    scale = 1,
+    rotationY = 0
+) {
+
+    const model =
+        cloneAsset(filename);
+
+
+    if (!model)
+        return null;
+
+
+    model.position.copy(
+        position
     );
 
 
-    group.position.set(
-        x,
-        0,
-        z
+    model.scale.setScalar(
+        scale
     );
+
+
+    model.rotation.y =
+        rotationY;
 
 
     scene.add(
-        group
+        model
     );
+
+
+    return model;
 }
+
+
+/* =====================================================
+   ANIMATED SNOW
+===================================================== */
+
+const snowParticles =
+    new THREE.BufferGeometry();
+
+
+const snowCount =
+    1600;
+
+
+const snowPositions =
+    new Float32Array(
+        snowCount * 3
+    );
 
 
 for (
     let i = 0;
-    i < 30;
+    i < snowCount;
     i++
 ) {
 
-    const angle =
-        Math.random() *
-        Math.PI * 2;
-
-    const radius =
-        25 +
-        Math.random() * 35;
+    snowPositions[
+        i * 3
+    ] =
+        (Math.random() - .5) * 150;
 
 
-    makeTree(
+    snowPositions[
+        i * 3 + 1
+    ] =
+        Math.random() * 60;
 
-        Math.cos(angle) *
-        radius,
 
-        Math.sin(angle) *
-        radius
-
-    );
+    snowPositions[
+        i * 3 + 2
+    ] =
+        (Math.random() - .5) * 150;
 
 }
 
 
-/* =========================
-   RESEARCH STATION
-========================= */
-
-const station =
-    new THREE.Mesh(
-
-        new THREE.BoxGeometry(
-            10,
-            5,
-            7
-        ),
-
-        new THREE.MeshStandardMaterial({
-            color: 0x314d59
-        })
-
-    );
-
-
-station.position.set(
-    0,
-    2.5,
-    -5
+snowParticles.setAttribute(
+    "position",
+    new THREE.BufferAttribute(
+        snowPositions,
+        3
+    )
 );
+
+
+const snowMaterial =
+    new THREE.PointsMaterial({
+
+        color: 0xffffff,
+
+        size: .12,
+
+        transparent: true,
+
+        opacity: .75
+
+    });
+
+
+const snow =
+    new THREE.Points(
+        snowParticles,
+        snowMaterial
+    );
 
 
 scene.add(
-    station
+    snow
 );
 
 
-/* Roof */
+/* =====================================================
+   GAME OBJECTS
+===================================================== */
 
-const roof =
-    new THREE.Mesh(
+let polarBear;
+let caribou;
+let arcticWolf;
 
-        new THREE.ConeGeometry(
-            7,
-            3,
-            4
-        ),
-
-        new THREE.MeshStandardMaterial({
-            color: 0x6e8b94
-        })
-
-    );
+let researchStation;
+let terminal;
 
 
-roof.position.set(
-    0,
-    6.5,
-    -5
-);
+/* =====================================================
+   BUILD WORLD
+===================================================== */
 
+async function buildWorld() {
 
-roof.rotation.y =
-    Math.PI / 4;
+    try {
 
-
-scene.add(
-    roof
-);
-
-
-/* =========================
-   ANIMAL CREATION
-========================= */
-
-function makeAnimal(
-    name,
-    color,
-    position
-) {
-
-    const group =
-        new THREE.Group();
-
-
-    /* BODY */
-
-    const body =
-        new THREE.Mesh(
-
-            new THREE.SphereGeometry(
-                1.3,
-                12,
-                8
-            ),
-
-            new THREE.MeshStandardMaterial({
-                color: color
-            })
-
+        await Promise.all(
+            assetFiles.map(
+                file =>
+                    loadModel(file)
+            )
         );
 
+    } catch (error) {
 
-    body.scale.set(
-        1.4,
-        1,
-        .8
-    );
-
-
-    group.add(
-        body
-    );
-
-
-    /* HEAD */
-
-    const head =
-        new THREE.Mesh(
-
-            new THREE.SphereGeometry(
-                .8,
-                12,
-                8
-            ),
-
-            new THREE.MeshStandardMaterial({
-                color: color
-            })
-
-        );
-
-
-    head.position.set(
-        0,
-        .5,
-        -.9
-    );
-
-
-    group.add(
-        head
-    );
-
-
-    /* LEGS */
-
-    for (
-        let i = 0;
-        i < 4;
-        i++
-    ) {
-
-        const leg =
-            new THREE.Mesh(
-
-                new THREE.CylinderGeometry(
-                    .15,
-                    .2,
-                    1.4,
-                    8
-                ),
-
-                new THREE.MeshStandardMaterial({
-                    color: color
-                })
-
-            );
-
-
-        leg.position.set(
-
-            i % 2 === 0
-                ? -.8
-                : .8,
-
-            -.9,
-
-            i < 2
-                ? -.5
-                : .5
-
-        );
-
-
-        group.add(
-            leg
+        console.error(
+            "Some assets failed to load.",
+            error
         );
 
     }
 
 
-    group.position.copy(
-        position
+    /* Ground */
+
+    addAsset(
+        "snow_ground.glb",
+        new THREE.Vector3(
+            0,
+            -0.05,
+            -20
+        ),
+        12
     );
 
 
-    group.userData.animal =
-        name;
+    /* Second ground section */
 
-
-    scene.add(
-        group
+    addAsset(
+        "snow_ground.glb",
+        new THREE.Vector3(
+            0,
+            -0.05,
+            -65
+        ),
+        12
     );
 
 
-    return group;
+    /* Mountains */
+
+    addAsset(
+        "mountain_bg.glb",
+        new THREE.Vector3(
+            0,
+            0,
+            -85
+        ),
+        4
+    );
+
+
+    /* Research station */
+
+    researchStation =
+        addAsset(
+            "research_station.glb",
+            new THREE.Vector3(
+                0,
+                0,
+                -8
+            ),
+            1.5
+        );
+
+
+    /* Watch tower */
+
+    addAsset(
+        "watch_tower.glb",
+        new THREE.Vector3(
+            -16,
+            0,
+            -18
+        ),
+        1.5
+    );
+
+
+    /* Terminal */
+
+    terminal =
+        addAsset(
+            "data_terminal.glb",
+            new THREE.Vector3(
+                0,
+                0,
+                -1
+            ),
+            1
+        );
+
+
+    /* Frozen lake */
+
+    addAsset(
+        "frozen_lake.glb",
+        new THREE.Vector3(
+            20,
+            0,
+            -35
+        ),
+        3
+    );
+
+
+    /* Ice cave */
+
+    addAsset(
+        "ice_cave.glb",
+        new THREE.Vector3(
+            25,
+            0,
+            -60
+        ),
+        2.5
+    );
+
+
+    /* Ice walls */
+
+    addAsset(
+        "ice_wall.glb",
+        new THREE.Vector3(
+            -28,
+            0,
+            -40
+        ),
+        3
+    );
+
+
+    addAsset(
+        "ice_wall.glb",
+        new THREE.Vector3(
+            28,
+            0,
+            -45
+        ),
+        3,
+        Math.PI
+    );
+
+
+    /* Nature */
+
+    const treePositions = [
+
+        [-22, -8],
+        [22, -12],
+
+        [-27, -25],
+        [28, -25],
+
+        [-20, -38],
+        [20, -45],
+
+        [-32, -55],
+        [32, -60],
+
+        [-15, -70],
+        [15, -72]
+
+    ];
+
+
+    treePositions.forEach(
+        position => {
+
+            addAsset(
+                "pine_tree.glb",
+
+                new THREE.Vector3(
+                    position[0],
+                    0,
+                    position[1]
+                ),
+
+                .9 +
+                Math.random() * .4,
+
+                Math.random() *
+                Math.PI * 2
+
+            );
+
+        }
+    );
+
+
+    /* Rocks */
+
+    const rocks = [
+
+        [-8, -18],
+        [8, -16],
+
+        [-18, -30],
+        [15, -30],
+
+        [-8, -48],
+        [10, -55],
+
+        [-25, -68],
+        [25, -70]
+
+    ];
+
+
+    rocks.forEach(
+        position => {
+
+            addAsset(
+                "snow_rock.glb",
+
+                new THREE.Vector3(
+                    position[0],
+                    0,
+                    position[1]
+                ),
+
+                .7 +
+                Math.random() * .6,
+
+                Math.random() *
+                Math.PI * 2
+
+            );
+
+        }
+    );
+
+
+    /* Ice spires */
+
+    addAsset(
+        "ice_spire.glb",
+        new THREE.Vector3(
+            -18,
+            0,
+            -52
+        ),
+        1.2
+    );
+
+
+    addAsset(
+        "ice_spire.glb",
+        new THREE.Vector3(
+            18,
+            0,
+            -55
+        ),
+        1.4
+    );
+
+
+    /* Props */
+
+    addAsset(
+        "crate.glb",
+        new THREE.Vector3(
+            -5,
+            0,
+            -5
+        ),
+        .9
+    );
+
+
+    addAsset(
+        "supply_box.glb",
+        new THREE.Vector3(
+            6,
+            0,
+            -7
+        ),
+        .9
+    );
+
+
+    addAsset(
+        "fuel_barrel.glb",
+        new THREE.Vector3(
+            -7,
+            0,
+            -8
+        ),
+        .8
+    );
+
+
+    addAsset(
+        "satellite_dish.glb",
+        new THREE.Vector3(
+            3,
+            5,
+            -8
+        ),
+        .7
+    );
+
+
+    /* Lamps */
+
+    addAsset(
+        "lamp_post.glb",
+        new THREE.Vector3(
+            -8,
+            0,
+            -3
+        ),
+        1
+    );
+
+
+    addAsset(
+        "lamp_post.glb",
+        new THREE.Vector3(
+            8,
+            0,
+            -3
+        ),
+        1
+    );
+
+
+    addAsset(
+        "lamp_post.glb",
+        new THREE.Vector3(
+            -10,
+            0,
+            -25
+        ),
+        1
+    );
+
+
+    addAsset(
+        "lamp_post.glb",
+        new THREE.Vector3(
+            10,
+            0,
+            -25
+        ),
+        1
+    );
+
+
+    /* =================================================
+       ANIMALS
+    ================================================= */
+
+
+    polarBear =
+        addAsset(
+            "polar_bear.glb",
+            new THREE.Vector3(
+                -12,
+                0,
+                -23
+            ),
+            1.6,
+            Math.PI
+        );
+
+
+    caribou =
+        addAsset(
+            "caribou.glb",
+            new THREE.Vector3(
+                12,
+                0,
+                -38
+            ),
+            1.5,
+            Math.PI
+        );
+
+
+    arcticWolf =
+        addAsset(
+            "arctic_wolf.glb",
+            new THREE.Vector3(
+                -8,
+                0,
+                -55
+            ),
+            1.4,
+            Math.PI
+        );
+
+
+    polarBear.userData.animal =
+        "polarBear";
+
+
+    caribou.userData.animal =
+        "caribou";
+
+
+    arcticWolf.userData.animal =
+        "wolf";
+
+
+    polarBear.userData.completed =
+        false;
+
+
+    caribou.userData.completed =
+        false;
+
+
+    arcticWolf.userData.completed =
+        false;
+
+
+    /* Initial camera */
+
+    camera.position.set(
+        0,
+        2,
+        8
+    );
+
 }
 
 
-/* Polar bear */
-
-const polarBear =
-    makeAnimal(
-        "polarBear",
-        0xf5f7f7,
-        new THREE.Vector3(
-            -10,
-            2,
-            -15
-        )
-    );
-
-
-/* Caribou */
-
-const caribou =
-    makeAnimal(
-        "caribou",
-        0x76503b,
-        new THREE.Vector3(
-            10,
-            2,
-            -25
-        )
-    );
-
-
-/* Wolf */
-
-const wolf =
-    makeAnimal(
-        "wolf",
-        0x7c8588,
-        new THREE.Vector3(
-            -5,
-            2,
-            -38
-        )
-    );
-
-
-/* =========================
+/* =====================================================
    ANIMAL DATA
-========================= */
+===================================================== */
 
 const animalData = {
 
     polarBear: {
 
-        name: "POLAR BEAR",
+        name:
+            "POLAR BEAR",
 
         question:
             "Which adaptation helps a polar bear survive extreme cold?",
@@ -575,7 +917,8 @@ const animalData = {
 
         ],
 
-        correct: 0,
+        correct:
+            0,
 
         fact:
             "DATA RECOVERED!\n\nPolar bears have thick fur and a layer of body fat that help reduce heat loss."
@@ -585,7 +928,8 @@ const animalData = {
 
     caribou: {
 
-        name: "CARIBOU",
+        name:
+            "CARIBOU",
 
         question:
             "What is an important part of a caribou's winter diet?",
@@ -600,7 +944,8 @@ const animalData = {
 
         ],
 
-        correct: 0,
+        correct:
+            0,
 
         fact:
             "DATA RECOVERED!\n\nCaribou rely heavily on lichens during winter."
@@ -610,7 +955,8 @@ const animalData = {
 
     wolf: {
 
-        name: "ARCTIC WOLF",
+        name:
+            "ARCTIC WOLF",
 
         question:
             "Where does the Arctic wolf primarily live?",
@@ -625,7 +971,8 @@ const animalData = {
 
         ],
 
-        correct: 0,
+        correct:
+            0,
 
         fact:
             "DATA RECOVERED!\n\nArctic wolves are adapted to extremely cold northern environments."
@@ -635,26 +982,27 @@ const animalData = {
 };
 
 
-/* =========================
-   FIRST PERSON CONTROLS
-========================= */
+/* =====================================================
+   FIRST PERSON CAMERA
+===================================================== */
 
 let yaw = 0;
 let pitch = 0;
 
-const keys = {};
-
 let mouseLocked = false;
+
+const keys = {};
 
 
 document.addEventListener(
     "mousemove",
-    function(event) {
+    event => {
 
         if (
             !mouseLocked ||
             !gameStarted ||
-            activePuzzle
+            activePuzzle ||
+            gameFinished
         ) {
             return;
         }
@@ -662,16 +1010,17 @@ document.addEventListener(
 
         yaw -=
             event.movementX *
-            0.002;
+            .0022;
 
 
         pitch -=
             event.movementY *
-            0.002;
+            .0022;
 
 
         const limit =
-            Math.PI / 2 - 0.1;
+            Math.PI / 2 -
+            .08;
 
 
         pitch =
@@ -684,20 +1033,24 @@ document.addEventListener(
             );
 
 
-        camera.rotation.set(
-            pitch,
-            yaw,
-            0,
-            "YXZ"
-        );
+        camera.rotation.order =
+            "YXZ";
+
+
+        camera.rotation.y =
+            yaw;
+
+
+        camera.rotation.x =
+            pitch;
 
     }
 );
 
 
-/* =========================
-   START BUTTON
-========================= */
+/* =====================================================
+   START
+===================================================== */
 
 document
     .getElementById(
@@ -705,7 +1058,7 @@ document
     )
     .addEventListener(
         "click",
-        function() {
+        async () => {
 
             document
                 .getElementById(
@@ -719,10 +1072,17 @@ document
                 true;
 
 
+            if (
+                !timerStarted
+            ) {
+
+                startTimer();
+
+            }
+
+
             document.body.requestPointerLock();
 
-
-            startTimer();
 
         }
     );
@@ -730,7 +1090,7 @@ document
 
 document.addEventListener(
     "pointerlockchange",
-    function() {
+    () => {
 
         mouseLocked =
             document.pointerLockElement ===
@@ -740,13 +1100,13 @@ document.addEventListener(
 );
 
 
-/* =========================
+/* =====================================================
    KEYBOARD
-========================= */
+===================================================== */
 
 document.addEventListener(
     "keydown",
-    function(event) {
+    event => {
 
         keys[event.code] =
             true;
@@ -767,7 +1127,7 @@ document.addEventListener(
 
 document.addEventListener(
     "keyup",
-    function(event) {
+    event => {
 
         keys[event.code] =
             false;
@@ -776,11 +1136,19 @@ document.addEventListener(
 );
 
 
-/* =========================
+/* =====================================================
    MOVEMENT
-========================= */
+===================================================== */
 
-const movement =
+const velocity =
+    new THREE.Vector3();
+
+
+const forward =
+    new THREE.Vector3();
+
+
+const right =
     new THREE.Vector3();
 
 
@@ -790,190 +1158,195 @@ function updateMovement(
 
     if (
         !gameStarted ||
-        gameFinished ||
-        activePuzzle
+        activePuzzle ||
+        gameFinished
     ) {
         return;
     }
 
 
-    movement.set(
-        0,
-        0,
-        0
-    );
+    let forwardAmount =
+        0;
+
+    let rightAmount =
+        0;
 
 
     if (
         keys["KeyW"]
-    ) {
-
-        movement.z -= 1;
-
-    }
+    )
+        forwardAmount += 1;
 
 
     if (
         keys["KeyS"]
-    ) {
-
-        movement.z += 1;
-
-    }
-
-
-    if (
-        keys["KeyA"]
-    ) {
-
-        movement.x -= 1;
-
-    }
+    )
+        forwardAmount -= 1;
 
 
     if (
         keys["KeyD"]
-    ) {
-
-        movement.x += 1;
-
-    }
+    )
+        rightAmount += 1;
 
 
     if (
-        movement.length() > 0
+        keys["KeyA"]
+    )
+        rightAmount -= 1;
+
+
+    if (
+        forwardAmount === 0 &&
+        rightAmount === 0
     ) {
 
-        movement.normalize();
+        return;
 
     }
 
 
-    const speed =
-        8 * delta;
+    forward.set(
+        0,
+        0,
+        -1
+    );
 
 
-    const forward =
-        new THREE.Vector3(
-            0,
-            0,
-            -1
-        );
-
-    const right =
-        new THREE.Vector3(
-            1,
-            0,
-            0
-        );
+    right.set(
+        1,
+        0,
+        0
+    );
 
 
     forward.applyQuaternion(
         camera.quaternion
     );
 
+
     right.applyQuaternion(
         camera.quaternion
     );
 
 
-    forward.y = 0;
-    right.y = 0;
+    forward.y =
+        0;
+
+
+    right.y =
+        0;
 
 
     forward.normalize();
     right.normalize();
 
 
-    camera.position.addScaledVector(
+    velocity.set(
+        0,
+        0,
+        0
+    );
+
+
+    velocity.addScaledVector(
         forward,
-        -movement.z * speed
+        forwardAmount
     );
+
+
+    velocity.addScaledVector(
+        right,
+        rightAmount
+    );
+
+
+    velocity.normalize();
+
+
+    const speed =
+        7;
 
 
     camera.position.addScaledVector(
-        right,
-        movement.x * speed
+        velocity,
+        speed * delta
     );
 
 
-    camera.position.y =
-        2;
-
-
-    /* World boundary */
+    /* Keep player inside map */
 
     camera.position.x =
         THREE.MathUtils.clamp(
             camera.position.x,
-            -65,
-            65
+            -35,
+            35
         );
 
 
     camera.position.z =
         THREE.MathUtils.clamp(
             camera.position.z,
-            -65,
-            30
+            -75,
+            15
         );
+
+
+    camera.position.y =
+        2;
 
 }
 
 
-/* =========================
-   INVESTIGATE
-========================= */
+/* =====================================================
+   FIND NEAREST ANIMAL
+===================================================== */
 
-function investigate() {
-
-    if (
-        !gameStarted ||
-        gameFinished ||
-        activePuzzle
-    ) {
-        return;
-    }
-
+function getNearestAnimal() {
 
     const animals = [
+
         polarBear,
         caribou,
-        wolf
+        arcticWolf
+
     ];
 
 
-    let nearest = null;
+    let nearest =
+        null;
 
-    let nearestDistance =
+
+    let distance =
         Infinity;
 
 
     animals.forEach(
-        function(animal) {
+        animal => {
 
             if (
+                !animal ||
                 animal.userData.completed
             ) {
                 return;
             }
 
 
-            const distance =
+            const d =
                 camera.position.distanceTo(
                     animal.position
                 );
 
 
             if (
-                distance < nearestDistance
+                d < distance
             ) {
+
+                distance =
+                    d;
 
                 nearest =
                     animal;
-
-                nearestDistance =
-                    distance;
 
             }
 
@@ -981,13 +1354,99 @@ function investigate() {
     );
 
 
+    return {
+        animal: nearest,
+        distance: distance
+    };
+
+}
+
+
+/* =====================================================
+   INTERACTION UI
+===================================================== */
+
+function updateInteraction() {
+
     if (
-        nearest &&
-        nearestDistance < 7
+        !gameStarted ||
+        activePuzzle ||
+        gameFinished
+    ) {
+
+        document
+            .getElementById(
+                "interaction"
+            )
+            .classList.remove(
+                "visible"
+            );
+
+        return;
+
+    }
+
+
+    const result =
+        getNearestAnimal();
+
+
+    if (
+        result.animal &&
+        result.distance < 7
+    ) {
+
+        document
+            .getElementById(
+                "interaction"
+            )
+            .classList.add(
+                "visible"
+            );
+
+    } else {
+
+        document
+            .getElementById(
+                "interaction"
+            )
+            .classList.remove(
+                "visible"
+            );
+
+    }
+
+}
+
+
+/* =====================================================
+   INVESTIGATE
+===================================================== */
+
+function investigate() {
+
+    if (
+        !gameStarted ||
+        activePuzzle ||
+        gameFinished
+    ) {
+
+        return;
+
+    }
+
+
+    const result =
+        getNearestAnimal();
+
+
+    if (
+        result.animal &&
+        result.distance < 7
     ) {
 
         openPuzzle(
-            nearest.userData.animal
+            result.animal.userData.animal
         );
 
     }
@@ -995,9 +1454,9 @@ function investigate() {
 }
 
 
-/* =========================
+/* =====================================================
    PUZZLE
-========================= */
+===================================================== */
 
 function openPuzzle(
     id
@@ -1030,16 +1489,6 @@ function openPuzzle(
         info.question;
 
 
-    const answerBox =
-        document.getElementById(
-            "answers"
-        );
-
-
-    answerBox.innerHTML =
-        "";
-
-
     document
         .getElementById(
             "fact"
@@ -1056,11 +1505,18 @@ function openPuzzle(
         "none";
 
 
+    const answerBox =
+        document.getElementById(
+            "answers"
+        );
+
+
+    answerBox.innerHTML =
+        "";
+
+
     info.answers.forEach(
-        function(
-            answer,
-            index
-        ) {
+        (answer, index) => {
 
             const button =
                 document.createElement(
@@ -1073,13 +1529,13 @@ function openPuzzle(
 
 
             button.textContent =
-                answer;
+                `${String.fromCharCode(65 + index)}  ${answer}`;
 
 
             button.onclick =
-                function() {
+                () => {
 
-                    answerQuestion(
+                    chooseAnswer(
                         index,
                         info,
                         id
@@ -1106,11 +1562,11 @@ function openPuzzle(
 }
 
 
-/* =========================
+/* =====================================================
    ANSWER
-========================= */
+===================================================== */
 
-function answerQuestion(
+function chooseAnswer(
     index,
     info,
     id
@@ -1126,7 +1582,9 @@ function answerQuestion(
         index === info.correct
     ) {
 
-        score += 100;
+        score +=
+            100;
+
 
         dataRecovered++;
 
@@ -1148,7 +1606,6 @@ function answerQuestion(
 
 
         fact.textContent =
-            "✓ " +
             info.fact;
 
 
@@ -1160,40 +1617,48 @@ function answerQuestion(
             "";
 
 
-        document
-            .getElementById(
+        const continueButton =
+            document.getElementById(
                 "continueButton"
-            )
-            .style.display =
-            "inline-block";
-
-
-        const animal =
-            scene.children.find(
-                object =>
-                    object.userData &&
-                    object.userData.animal === id
             );
 
 
-        if (animal) {
-
-            animal.userData.completed =
-                true;
-
-        }
+        continueButton.style.display =
+            "inline-block";
 
 
         if (
             dataRecovered >= 3
         ) {
 
-            document
-                .getElementById(
-                    "continueButton"
-                )
-                .textContent =
+            continueButton.textContent =
                 "FINISH MISSION";
+
+        }
+
+
+        const animals = [
+
+            polarBear,
+            caribou,
+            arcticWolf
+
+        ];
+
+
+        const target =
+            animals.find(
+                animal =>
+                    animal &&
+                    animal.userData.animal ===
+                    id
+            );
+
+
+        if (target) {
+
+            target.userData.completed =
+                true;
 
         }
 
@@ -1207,9 +1672,9 @@ function answerQuestion(
 }
 
 
-/* =========================
+/* =====================================================
    CONTINUE
-========================= */
+===================================================== */
 
 document
     .getElementById(
@@ -1217,7 +1682,7 @@ document
     )
     .addEventListener(
         "click",
-        function() {
+        () => {
 
             document
                 .getElementById(
@@ -1248,20 +1713,18 @@ document
     );
 
 
-/* =========================
+/* =====================================================
    TIMER
-========================= */
-
-let timerStarted =
-    false;
-
+===================================================== */
 
 function startTimer() {
 
     if (
         timerStarted
     ) {
+
         return;
+
     }
 
 
@@ -1271,7 +1734,7 @@ function startTimer() {
 
     const interval =
         setInterval(
-            function() {
+            () => {
 
                 if (
                     gameFinished
@@ -1305,6 +1768,7 @@ function startTimer() {
                         interval
                     );
 
+
                     finishGame();
 
                 }
@@ -1316,14 +1780,18 @@ function startTimer() {
 }
 
 
-/* =========================
+/* =====================================================
    FINISH
-========================= */
+===================================================== */
 
 function finishGame() {
 
     gameFinished =
         true;
+
+
+    activePuzzle =
+        null;
 
 
     document.exitPointerLock();
@@ -1334,7 +1802,7 @@ function finishGame() {
             "finalScore"
         )
         .textContent =
-        `SCORE: ${score}  •  DATA RECOVERED: ${dataRecovered}/3`;
+        `SCORE ${score}  •  DATA RECOVERED ${dataRecovered}/3`;
 
 
     document
@@ -1347,9 +1815,67 @@ function finishGame() {
 }
 
 
-/* =========================
-   RENDER
-========================= */
+/* =====================================================
+   SNOW ANIMATION
+===================================================== */
+
+function updateSnow(
+    delta
+) {
+
+    const positions =
+        snow.geometry.attributes
+            .position.array;
+
+
+    for (
+        let i = 0;
+        i < snowCount;
+        i++
+    ) {
+
+        positions[
+            i * 3 + 1
+        ] -=
+            delta * 2;
+
+
+        positions[
+            i * 3
+        ] +=
+            Math.sin(
+                Date.now() * .0005 +
+                i
+            ) *
+            delta *
+            .15;
+
+
+        if (
+            positions[
+                i * 3 + 1
+            ] < 0
+        ) {
+
+            positions[
+                i * 3 + 1
+            ] = 60;
+
+        }
+
+    }
+
+
+    snow.geometry.attributes
+        .position.needsUpdate =
+        true;
+
+}
+
+
+/* =====================================================
+   GAME LOOP
+===================================================== */
 
 const clock =
     new THREE.Clock();
@@ -1365,11 +1891,19 @@ function animate() {
     const delta =
         Math.min(
             clock.getDelta(),
-            0.05
+            .05
         );
 
 
     updateMovement(
+        delta
+    );
+
+
+    updateInteraction();
+
+
+    updateSnow(
         delta
     );
 
@@ -1382,16 +1916,13 @@ function animate() {
 }
 
 
-animate();
-
-
-/* =========================
+/* =====================================================
    RESIZE
-========================= */
+===================================================== */
 
 window.addEventListener(
     "resize",
-    function() {
+    () => {
 
         camera.aspect =
             window.innerWidth /
@@ -1408,3 +1939,12 @@ window.addEventListener(
 
     }
 );
+
+
+/* =====================================================
+   START GAME ENGINE
+===================================================== */
+
+buildWorld();
+
+animate();
