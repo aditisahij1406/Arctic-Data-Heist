@@ -1,49 +1,58 @@
-import * as THREE from
-    "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
-
-import { PointerLockControls } from
-    "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/PointerLockControls.js";
+/* =====================================================
+   ARCTIC DATA HEIST
+   First-person mini game
+   ===================================================== */
 
 
 /* =========================
-   GAME STATE
+   GAME VARIABLES
 ========================= */
-
-let score = 0;
-let dataRecovered = 0;
-let timeLeft = 90;
 
 let gameStarted = false;
 let gameFinished = false;
+
+let score = 0;
+let dataRecovered = 0;
+
+let timeLeft = 90;
 
 let activePuzzle = null;
 
 
 /* =========================
-   THREE.JS
+   THREE.JS SETUP
 ========================= */
 
-const scene = new THREE.Scene();
+const scene =
+    new THREE.Scene();
 
 scene.background =
-    new THREE.Color(0x9ed9ed);
+    new THREE.Color(
+        0x9bd9ea
+    );
 
 scene.fog =
-    new THREE.Fog(0x9ed9ed, 20, 120);
+    new THREE.Fog(
+        0x9bd9ea,
+        20,
+        100
+    );
 
 
 const camera =
     new THREE.PerspectiveCamera(
         75,
-        window.innerWidth / window.innerHeight,
+        window.innerWidth /
+        window.innerHeight,
         0.1,
         200
     );
 
+
 camera.position.set(
     0,
     2,
-    12
+    15
 );
 
 
@@ -52,16 +61,20 @@ const renderer =
         antialias: true
     });
 
+
 renderer.setSize(
     window.innerWidth,
     window.innerHeight
 );
 
+
 renderer.setPixelRatio(
-    Math.min(window.devicePixelRatio, 2)
+    Math.min(
+        window.devicePixelRatio,
+        2
+    )
 );
 
-renderer.shadowMap.enabled = true;
 
 document.body.appendChild(
     renderer.domElement
@@ -69,68 +82,72 @@ document.body.appendChild(
 
 
 /* =========================
-   LIGHTING
+   LIGHT
 ========================= */
 
-const ambient =
+const ambientLight =
     new THREE.HemisphereLight(
-        0xc8efff,
-        0x456070,
+        0xdff7ff,
+        0x40535a,
         2
     );
 
-scene.add(ambient);
+scene.add(
+    ambientLight
+);
 
 
-const sun =
+const sunlight =
     new THREE.DirectionalLight(
         0xffffff,
-        3
+        2.5
     );
 
-sun.position.set(
+sunlight.position.set(
     20,
     40,
     10
 );
 
-sun.castShadow = true;
-
-scene.add(sun);
+scene.add(
+    sunlight
+);
 
 
 /* =========================
    GROUND
 ========================= */
 
-const groundMaterial =
-    new THREE.MeshStandardMaterial({
-        color: 0xe9f7fb,
-        roughness: 1
-    });
-
 const ground =
     new THREE.Mesh(
+
         new THREE.PlaneGeometry(
-            160,
-            160
+            150,
+            150
         ),
-        groundMaterial
+
+        new THREE.MeshStandardMaterial({
+            color: 0xe7f5f8,
+            roughness: 1
+        })
+
     );
+
 
 ground.rotation.x =
     -Math.PI / 2;
 
-ground.receiveShadow = true;
 
-scene.add(ground);
+scene.add(
+    ground
+);
 
 
 /* =========================
    MOUNTAINS
 ========================= */
 
-function createMountain(
+function makeMountain(
     x,
     z,
     size
@@ -138,15 +155,19 @@ function createMountain(
 
     const mountain =
         new THREE.Mesh(
+
             new THREE.ConeGeometry(
                 size,
                 size * 2,
-                6
+                7
             ),
+
             new THREE.MeshStandardMaterial({
-                color: 0xb9d7df
+                color: 0xb7d4dc
             })
+
         );
+
 
     mountain.position.set(
         x,
@@ -154,62 +175,93 @@ function createMountain(
         z
     );
 
-    mountain.castShadow = true;
 
-    scene.add(mountain);
+    scene.add(
+        mountain
+    );
 }
 
 
-createMountain(-35, -35, 15);
-createMountain(0, -45, 20);
-createMountain(35, -35, 16);
+makeMountain(
+    -35,
+    -40,
+    18
+);
+
+makeMountain(
+    0,
+    -50,
+    22
+);
+
+makeMountain(
+    35,
+    -40,
+    17
+);
 
 
 /* =========================
    TREES
 ========================= */
 
-function createTree(x, z) {
+function makeTree(
+    x,
+    z
+) {
 
     const group =
         new THREE.Group();
 
+
     const trunk =
         new THREE.Mesh(
+
             new THREE.CylinderGeometry(
-                .35,
+                .3,
                 .5,
                 3
             ),
+
             new THREE.MeshStandardMaterial({
-                color: 0x513b2c
+                color: 0x4c372b
             })
+
         );
 
-    trunk.position.y = 1.5;
 
-    group.add(trunk);
+    trunk.position.y =
+        1.5;
 
 
-    for (let i = 0; i < 3; i++) {
+    group.add(
+        trunk
+    );
 
-        const snowTree =
-            new THREE.Mesh(
-                new THREE.ConeGeometry(
-                    2.5 - i * .5,
-                    4,
-                    7
-                ),
-                new THREE.MeshStandardMaterial({
-                    color: 0x315c58
-                })
-            );
 
-        snowTree.position.y =
-            3 + i * 1.5;
+    const leaves =
+        new THREE.Mesh(
 
-        group.add(snowTree);
-    }
+            new THREE.ConeGeometry(
+                2.3,
+                6,
+                7
+            ),
+
+            new THREE.MeshStandardMaterial({
+                color: 0x2e5c58
+            })
+
+        );
+
+
+    leaves.position.y =
+        5;
+
+
+    group.add(
+        leaves
+    );
 
 
     group.position.set(
@@ -218,144 +270,290 @@ function createTree(x, z) {
         z
     );
 
-    scene.add(group);
+
+    scene.add(
+        group
+    );
 }
 
 
-for (let i = 0; i < 25; i++) {
+for (
+    let i = 0;
+    i < 30;
+    i++
+) {
 
     const angle =
-        Math.random() * Math.PI * 2;
+        Math.random() *
+        Math.PI * 2;
 
     const radius =
-        25 + Math.random() * 40;
+        25 +
+        Math.random() * 35;
 
-    createTree(
-        Math.cos(angle) * radius,
-        Math.sin(angle) * radius
+
+    makeTree(
+
+        Math.cos(angle) *
+        radius,
+
+        Math.sin(angle) *
+        radius
+
     );
+
 }
 
 
 /* =========================
-   ANIMAL PLACEHOLDERS
+   RESEARCH STATION
 ========================= */
 
-function createAnimal(
-    emoji,
-    position,
-    id
+const station =
+    new THREE.Mesh(
+
+        new THREE.BoxGeometry(
+            10,
+            5,
+            7
+        ),
+
+        new THREE.MeshStandardMaterial({
+            color: 0x314d59
+        })
+
+    );
+
+
+station.position.set(
+    0,
+    2.5,
+    -5
+);
+
+
+scene.add(
+    station
+);
+
+
+/* Roof */
+
+const roof =
+    new THREE.Mesh(
+
+        new THREE.ConeGeometry(
+            7,
+            3,
+            4
+        ),
+
+        new THREE.MeshStandardMaterial({
+            color: 0x6e8b94
+        })
+
+    );
+
+
+roof.position.set(
+    0,
+    6.5,
+    -5
+);
+
+
+roof.rotation.y =
+    Math.PI / 4;
+
+
+scene.add(
+    roof
+);
+
+
+/* =========================
+   ANIMAL CREATION
+========================= */
+
+function makeAnimal(
+    name,
+    color,
+    position
 ) {
 
-    // Temporary placeholder.
-    // We'll replace these with
-    // our own low-poly models.
-
-    const canvas =
-        document.createElement("canvas");
-
-    canvas.width = 256;
-    canvas.height = 256;
-
-    const ctx =
-        canvas.getContext("2d");
-
-    ctx.clearRect(
-        0,
-        0,
-        256,
-        256
-    );
-
-    ctx.font =
-        "150px Arial";
-
-    ctx.textAlign =
-        "center";
-
-    ctx.textBaseline =
-        "middle";
-
-    ctx.fillText(
-        emoji,
-        128,
-        128
-    );
+    const group =
+        new THREE.Group();
 
 
-    const texture =
-        new THREE.CanvasTexture(
-            canvas
+    /* BODY */
+
+    const body =
+        new THREE.Mesh(
+
+            new THREE.SphereGeometry(
+                1.3,
+                12,
+                8
+            ),
+
+            new THREE.MeshStandardMaterial({
+                color: color
+            })
+
         );
 
-    const material =
-        new THREE.SpriteMaterial({
-            map: texture,
-            transparent: true
-        });
 
-    const sprite =
-        new THREE.Sprite(
-            material
-        );
-
-    sprite.scale.set(
-        5,
-        5,
-        1
+    body.scale.set(
+        1.4,
+        1,
+        .8
     );
 
-    sprite.position.copy(
+
+    group.add(
+        body
+    );
+
+
+    /* HEAD */
+
+    const head =
+        new THREE.Mesh(
+
+            new THREE.SphereGeometry(
+                .8,
+                12,
+                8
+            ),
+
+            new THREE.MeshStandardMaterial({
+                color: color
+            })
+
+        );
+
+
+    head.position.set(
+        0,
+        .5,
+        -.9
+    );
+
+
+    group.add(
+        head
+    );
+
+
+    /* LEGS */
+
+    for (
+        let i = 0;
+        i < 4;
+        i++
+    ) {
+
+        const leg =
+            new THREE.Mesh(
+
+                new THREE.CylinderGeometry(
+                    .15,
+                    .2,
+                    1.4,
+                    8
+                ),
+
+                new THREE.MeshStandardMaterial({
+                    color: color
+                })
+
+            );
+
+
+        leg.position.set(
+
+            i % 2 === 0
+                ? -.8
+                : .8,
+
+            -.9,
+
+            i < 2
+                ? -.5
+                : .5
+
+        );
+
+
+        group.add(
+            leg
+        );
+
+    }
+
+
+    group.position.copy(
         position
     );
 
-    sprite.userData.animal =
-        id;
 
-    scene.add(sprite);
+    group.userData.animal =
+        name;
 
-    return sprite;
+
+    scene.add(
+        group
+    );
+
+
+    return group;
 }
 
 
+/* Polar bear */
+
 const polarBear =
-    createAnimal(
-        "🐻‍❄️",
+    makeAnimal(
+        "polarBear",
+        0xf5f7f7,
         new THREE.Vector3(
-            -12,
-            3,
-            -10
-        ),
-        "polarBear"
+            -10,
+            2,
+            -15
+        )
     );
 
+
+/* Caribou */
 
 const caribou =
-    createAnimal(
-        "🦌",
+    makeAnimal(
+        "caribou",
+        0x76503b,
         new THREE.Vector3(
-            12,
-            3,
-            -20
-        ),
-        "caribou"
+            10,
+            2,
+            -25
+        )
     );
 
 
+/* Wolf */
+
 const wolf =
-    createAnimal(
-        "🐺",
+    makeAnimal(
+        "wolf",
+        0x7c8588,
         new THREE.Vector3(
-            -8,
-            3,
-            -32
-        ),
-        "wolf"
+            -5,
+            2,
+            -38
+        )
     );
 
 
 /* =========================
-   RESEARCH DATA
+   ANIMAL DATA
 ========================= */
 
 const animalData = {
@@ -368,15 +566,20 @@ const animalData = {
             "Which adaptation helps a polar bear survive extreme cold?",
 
         answers: [
+
             "Thick fur",
+
             "Large ears",
+
             "Thin skin"
+
         ],
 
         correct: 0,
 
         fact:
-            "Polar bears have thick fur and a layer of body fat that help reduce heat loss."
+            "DATA RECOVERED!\n\nPolar bears have thick fur and a layer of body fat that help reduce heat loss."
+
     },
 
 
@@ -385,18 +588,23 @@ const animalData = {
         name: "CARIBOU",
 
         question:
-            "What is an important part of a caribou's diet?",
+            "What is an important part of a caribou's winter diet?",
 
         answers: [
+
             "Lichens",
+
             "Seals",
+
             "Coral"
+
         ],
 
         correct: 0,
 
         fact:
-            "Caribou feed on grasses, leaves, shrubs and especially lichens during winter."
+            "DATA RECOVERED!\n\nCaribou rely heavily on lichens during winter."
+
     },
 
 
@@ -408,44 +616,111 @@ const animalData = {
             "Where does the Arctic wolf primarily live?",
 
         answers: [
+
             "Arctic regions",
+
             "Tropical rainforest",
+
             "Desert"
+
         ],
 
         correct: 0,
 
         fact:
-            "Arctic wolves are adapted to extremely cold northern environments."
+            "DATA RECOVERED!\n\nArctic wolves are adapted to extremely cold northern environments."
+
     }
 
 };
 
 
 /* =========================
-   CONTROLS
+   FIRST PERSON CONTROLS
 ========================= */
 
-const controls =
-    new PointerLockControls(
-        camera,
-        document.body
-    );
+let yaw = 0;
+let pitch = 0;
 
+const keys = {};
+
+let mouseLocked = false;
+
+
+document.addEventListener(
+    "mousemove",
+    function(event) {
+
+        if (
+            !mouseLocked ||
+            !gameStarted ||
+            activePuzzle
+        ) {
+            return;
+        }
+
+
+        yaw -=
+            event.movementX *
+            0.002;
+
+
+        pitch -=
+            event.movementY *
+            0.002;
+
+
+        const limit =
+            Math.PI / 2 - 0.1;
+
+
+        pitch =
+            Math.max(
+                -limit,
+                Math.min(
+                    limit,
+                    pitch
+                )
+            );
+
+
+        camera.rotation.set(
+            pitch,
+            yaw,
+            0,
+            "YXZ"
+        );
+
+    }
+);
+
+
+/* =========================
+   START BUTTON
+========================= */
 
 document
-    .getElementById("startButton")
+    .getElementById(
+        "startButton"
+    )
     .addEventListener(
         "click",
-        () => {
+        function() {
 
             document
-                .getElementById("startScreen")
-                .style.display = "none";
+                .getElementById(
+                    "startScreen"
+                )
+                .style.display =
+                "none";
 
-            controls.lock();
 
-            gameStarted = true;
+            gameStarted =
+                true;
+
+
+            document.body.requestPointerLock();
+
 
             startTimer();
 
@@ -453,17 +728,33 @@ document
     );
 
 
-const keys = {};
+document.addEventListener(
+    "pointerlockchange",
+    function() {
 
+        mouseLocked =
+            document.pointerLockElement ===
+            document.body;
+
+    }
+);
+
+
+/* =========================
+   KEYBOARD
+========================= */
 
 document.addEventListener(
     "keydown",
-    event => {
+    function(event) {
 
-        keys[event.code] = true;
+        keys[event.code] =
+            true;
+
 
         if (
-            event.code === "KeyE"
+            event.code ===
+            "KeyE"
         ) {
 
             investigate();
@@ -476,9 +767,10 @@ document.addEventListener(
 
 document.addEventListener(
     "keyup",
-    event => {
+    function(event) {
 
-        keys[event.code] = false;
+        keys[event.code] =
+            false;
 
     }
 );
@@ -488,53 +780,160 @@ document.addEventListener(
    MOVEMENT
 ========================= */
 
-const clock =
-    new THREE.Clock();
+const movement =
+    new THREE.Vector3();
 
 
-function movePlayer() {
+function updateMovement(
+    delta
+) {
 
-    if (!gameStarted ||
+    if (
+        !gameStarted ||
         gameFinished ||
-        activePuzzle)
+        activePuzzle
+    ) {
         return;
+    }
 
 
-    const delta =
-        clock.getDelta();
+    movement.set(
+        0,
+        0,
+        0
+    );
+
+
+    if (
+        keys["KeyW"]
+    ) {
+
+        movement.z -= 1;
+
+    }
+
+
+    if (
+        keys["KeyS"]
+    ) {
+
+        movement.z += 1;
+
+    }
+
+
+    if (
+        keys["KeyA"]
+    ) {
+
+        movement.x -= 1;
+
+    }
+
+
+    if (
+        keys["KeyD"]
+    ) {
+
+        movement.x += 1;
+
+    }
+
+
+    if (
+        movement.length() > 0
+    ) {
+
+        movement.normalize();
+
+    }
+
 
     const speed =
-        7 * delta;
+        8 * delta;
 
 
-    if (keys["KeyW"])
-        controls.moveForward(speed);
+    const forward =
+        new THREE.Vector3(
+            0,
+            0,
+            -1
+        );
 
-    if (keys["KeyS"])
-        controls.moveForward(-speed);
-
-    if (keys["KeyA"])
-        controls.moveRight(-speed);
-
-    if (keys["KeyD"])
-        controls.moveRight(speed);
+    const right =
+        new THREE.Vector3(
+            1,
+            0,
+            0
+        );
 
 
-    camera.position.y = 2;
+    forward.applyQuaternion(
+        camera.quaternion
+    );
+
+    right.applyQuaternion(
+        camera.quaternion
+    );
+
+
+    forward.y = 0;
+    right.y = 0;
+
+
+    forward.normalize();
+    right.normalize();
+
+
+    camera.position.addScaledVector(
+        forward,
+        -movement.z * speed
+    );
+
+
+    camera.position.addScaledVector(
+        right,
+        movement.x * speed
+    );
+
+
+    camera.position.y =
+        2;
+
+
+    /* World boundary */
+
+    camera.position.x =
+        THREE.MathUtils.clamp(
+            camera.position.x,
+            -65,
+            65
+        );
+
+
+    camera.position.z =
+        THREE.MathUtils.clamp(
+            camera.position.z,
+            -65,
+            30
+        );
 
 }
 
 
 /* =========================
-   INVESTIGATION
+   INVESTIGATE
 ========================= */
 
 function investigate() {
 
-    if (!gameStarted ||
+    if (
+        !gameStarted ||
         gameFinished ||
-        activePuzzle)
+        activePuzzle
+    ) {
         return;
+    }
 
 
     const animals = [
@@ -544,38 +943,51 @@ function investigate() {
     ];
 
 
-    let closest = null;
-    let closestDistance = 5;
+    let nearest = null;
+
+    let nearestDistance =
+        Infinity;
 
 
-    for (
-        const animal of animals
-    ) {
+    animals.forEach(
+        function(animal) {
 
-        const distance =
-            camera.position.distanceTo(
-                animal.position
-            );
+            if (
+                animal.userData.completed
+            ) {
+                return;
+            }
 
-        if (
-            distance < closestDistance
-        ) {
 
-            closest =
-                animal;
+            const distance =
+                camera.position.distanceTo(
+                    animal.position
+                );
 
-            closestDistance =
-                distance;
+
+            if (
+                distance < nearestDistance
+            ) {
+
+                nearest =
+                    animal;
+
+                nearestDistance =
+                    distance;
+
+            }
 
         }
+    );
 
-    }
 
-
-    if (closest) {
+    if (
+        nearest &&
+        nearestDistance < 7
+    ) {
 
         openPuzzle(
-            closest.userData.animal
+            nearest.userData.animal
         );
 
     }
@@ -587,72 +999,96 @@ function investigate() {
    PUZZLE
 ========================= */
 
-function openPuzzle(id) {
+function openPuzzle(
+    id
+) {
 
-    activePuzzle = id;
+    activePuzzle =
+        id;
+
+
+    document.exitPointerLock();
+
 
     const info =
         animalData[id];
 
 
     document
-        .getElementById("animalName")
+        .getElementById(
+            "animalName"
+        )
         .textContent =
         info.name;
 
 
     document
-        .getElementById("question")
+        .getElementById(
+            "question"
+        )
         .textContent =
         info.question;
 
 
-    const answers =
+    const answerBox =
         document.getElementById(
             "answers"
         );
 
-    answers.innerHTML = "";
+
+    answerBox.innerHTML =
+        "";
 
 
     document
-        .getElementById("fact")
-        .textContent = "";
+        .getElementById(
+            "fact"
+        )
+        .textContent =
+        "";
 
 
     document
-        .getElementById("continueButton")
+        .getElementById(
+            "continueButton"
+        )
         .style.display =
         "none";
 
 
     info.answers.forEach(
-        (answer, index) => {
+        function(
+            answer,
+            index
+        ) {
 
             const button =
                 document.createElement(
                     "button"
                 );
 
+
             button.className =
                 "answer";
+
 
             button.textContent =
                 answer;
 
 
             button.onclick =
-                () => {
+                function() {
 
-                    chooseAnswer(
+                    answerQuestion(
                         index,
-                        info
+                        info,
+                        id
                     );
 
                 };
 
 
-            answers.appendChild(
+            answerBox.appendChild(
                 button
             );
 
@@ -661,22 +1097,30 @@ function openPuzzle(id) {
 
 
     document
-        .getElementById("puzzle")
+        .getElementById(
+            "puzzle"
+        )
         .style.display =
         "flex";
 
 }
 
 
-function chooseAnswer(
+/* =========================
+   ANSWER
+========================= */
+
+function answerQuestion(
     index,
-    info
+    info,
+    id
 ) {
 
-    const answers =
+    const fact =
         document.getElementById(
-            "answers"
+            "fact"
         );
+
 
     if (
         index === info.correct
@@ -688,25 +1132,32 @@ function chooseAnswer(
 
 
         document
-            .getElementById("score")
+            .getElementById(
+                "score"
+            )
             .textContent =
             score;
 
 
         document
-            .getElementById("data")
+            .getElementById(
+                "data"
+            )
             .textContent =
             dataRecovered;
 
 
-        document
-            .getElementById("fact")
-            .textContent =
-            "✓ DATA RECOVERED\n\n" +
+        fact.textContent =
+            "✓ " +
             info.fact;
 
 
-        answers.innerHTML = "";
+        document
+            .getElementById(
+                "answers"
+            )
+            .innerHTML =
+            "";
 
 
         document
@@ -717,11 +1168,38 @@ function chooseAnswer(
             "inline-block";
 
 
+        const animal =
+            scene.children.find(
+                object =>
+                    object.userData &&
+                    object.userData.animal === id
+            );
+
+
+        if (animal) {
+
+            animal.userData.completed =
+                true;
+
+        }
+
+
+        if (
+            dataRecovered >= 3
+        ) {
+
+            document
+                .getElementById(
+                    "continueButton"
+                )
+                .textContent =
+                "FINISH MISSION";
+
+        }
+
     } else {
 
-        document
-            .getElementById("fact")
-            .textContent =
+        fact.textContent =
             "✕ INCORRECT — TRY AGAIN";
 
     }
@@ -729,45 +1207,92 @@ function chooseAnswer(
 }
 
 
+/* =========================
+   CONTINUE
+========================= */
+
 document
     .getElementById(
         "continueButton"
     )
-    .onclick =
-    () => {
+    .addEventListener(
+        "click",
+        function() {
 
-        document
-            .getElementById("puzzle")
-            .style.display =
-            "none";
+            document
+                .getElementById(
+                    "puzzle"
+                )
+                .style.display =
+                "none";
 
-        activePuzzle = null;
 
-    };
+            if (
+                dataRecovered >= 3
+            ) {
+
+                finishGame();
+
+                return;
+
+            }
+
+
+            activePuzzle =
+                null;
+
+
+            document.body.requestPointerLock();
+
+        }
+    );
 
 
 /* =========================
    TIMER
 ========================= */
 
+let timerStarted =
+    false;
+
+
 function startTimer() {
 
-    const timer =
+    if (
+        timerStarted
+    ) {
+        return;
+    }
+
+
+    timerStarted =
+        true;
+
+
+    const interval =
         setInterval(
-            () => {
+            function() {
 
                 if (
-                    !gameStarted ||
                     gameFinished
-                )
+                ) {
+
+                    clearInterval(
+                        interval
+                    );
+
                     return;
+
+                }
 
 
                 timeLeft--;
 
 
                 document
-                    .getElementById("time")
+                    .getElementById(
+                        "time"
+                    )
                     .textContent =
                     timeLeft;
 
@@ -777,13 +1302,12 @@ function startTimer() {
                 ) {
 
                     clearInterval(
-                        timer
+                        interval
                     );
 
                     finishGame();
 
                 }
-
 
             },
             1000
@@ -792,21 +1316,31 @@ function startTimer() {
 }
 
 
+/* =========================
+   FINISH
+========================= */
+
 function finishGame() {
 
-    gameFinished = true;
+    gameFinished =
+        true;
 
-    controls.unlock();
+
+    document.exitPointerLock();
 
 
     document
-        .getElementById("finalScore")
+        .getElementById(
+            "finalScore"
+        )
         .textContent =
         `SCORE: ${score}  •  DATA RECOVERED: ${dataRecovered}/3`;
 
 
     document
-        .getElementById("gameOver")
+        .getElementById(
+            "gameOver"
+        )
         .style.display =
         "flex";
 
@@ -814,8 +1348,12 @@ function finishGame() {
 
 
 /* =========================
-   RENDER LOOP
+   RENDER
 ========================= */
+
+const clock =
+    new THREE.Clock();
+
 
 function animate() {
 
@@ -823,7 +1361,18 @@ function animate() {
         animate
     );
 
-    movePlayer();
+
+    const delta =
+        Math.min(
+            clock.getDelta(),
+            0.05
+        );
+
+
+    updateMovement(
+        delta
+    );
+
 
     renderer.render(
         scene,
@@ -831,6 +1380,7 @@ function animate() {
     );
 
 }
+
 
 animate();
 
@@ -841,13 +1391,15 @@ animate();
 
 window.addEventListener(
     "resize",
-    () => {
+    function() {
 
         camera.aspect =
             window.innerWidth /
             window.innerHeight;
 
+
         camera.updateProjectionMatrix();
+
 
         renderer.setSize(
             window.innerWidth,
