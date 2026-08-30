@@ -172,7 +172,7 @@ function loadModel(
 
             loader.load(
 
-                `./assets/${filename}`,
+                `./${filename}`,
 
                 gltf => {
 
