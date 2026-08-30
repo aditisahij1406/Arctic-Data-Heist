@@ -3,72 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arctic Data Heist</title>
+
+    <title>ARCTIC: DATA HEIST</title>
+
     <link rel="stylesheet" href="style.css">
+
+    <!-- Three.js import map -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+        }
+    }
+    </script>
 </head>
 
 <body>
 
-    <!-- START SCREEN -->
+    <!-- ================= START ================= -->
+
     <div id="startScreen">
-        <div class="snow">❄ ❄ ❄ ❄ ❄</div>
 
-        <h1>ARCTIC DATA HEIST</h1>
+        <div class="logoSmall">❄</div>
 
-        <h2>RECOVER THE LOST RESEARCH</h2>
+        <h1>ARCTIC</h1>
+        <h2>DATA HEIST</h2>
 
-        <p>
-            Three animal files have been corrupted.<br>
-            Find the animals and recover their data.
+        <div class="line"></div>
+
+        <p class="missionTitle">
+            RECOVER THE LOST RESEARCH
         </p>
 
-        <button id="startButton">START EXPEDITION</button>
+        <p class="missionText">
+            Three animal research files have been corrupted.<br>
+            Find the animals, solve their puzzles,<br>
+            and recover the missing data.
+        </p>
 
-        <div class="controls">
-            WASD — MOVE &nbsp; | &nbsp; MOUSE — LOOK &nbsp; | &nbsp; E — INVESTIGATE
-        </div>
+        <button id="startButton">
+            START EXPEDITION
+        </button>
+
+        <p class="controlsText">
+            WASD — MOVE &nbsp;&nbsp; • &nbsp;&nbsp;
+            MOUSE — LOOK &nbsp;&nbsp; • &nbsp;&nbsp;
+            E — INVESTIGATE
+        </p>
+
     </div>
 
 
-    <!-- GAME HUD -->
+    <!-- ================= HUD ================= -->
+
     <div id="hud">
 
-        <div class="gameTitle">
-            ❄ ARCTIC DATA HEIST
+        <div class="hudLogo">
+            ❄ ARCTIC
         </div>
 
-        <div>
-            DATA:
-            <span id="data">0</span>/3
+        <div class="hudItem">
+            DATA
+            <strong>
+                <span id="data">0</span>/3
+            </strong>
         </div>
 
-        <div>
-            SCORE:
-            <span id="score">0</span>
+        <div class="hudItem">
+            SCORE
+            <strong id="score">0</strong>
         </div>
 
-        <div>
-            TIME:
-            <span id="time">90</span>
+        <div class="hudItem timer">
+            TIME
+            <strong id="time">90</strong>
         </div>
 
     </div>
 
 
-    <!-- CROSSHAIR -->
-    <div id="crosshair">+</div>
+    <!-- ================= CROSSHAIR ================= -->
+
+    <div id="crosshair">
+        <span></span>
+    </div>
 
 
-    <!-- INTERACTION MESSAGE -->
-    <div id="interaction"></div>
+    <!-- ================= INTERACTION ================= -->
+
+    <div id="interaction">
+        <span class="key">E</span>
+        <span>INVESTIGATE</span>
+    </div>
 
 
-    <!-- PUZZLE -->
+    <!-- ================= PUZZLE ================= -->
+
     <div id="puzzle">
 
         <div id="puzzleCard">
 
-            <div id="animalName"></div>
+            <div class="puzzleTop">
+
+                <div id="animalName">
+                    ANIMAL
+                </div>
+
+                <div class="fileStatus">
+                    CORRUPTED FILE
+                </div>
+
+            </div>
+
+            <div class="puzzleDivider"></div>
 
             <h2 id="question"></h2>
 
@@ -76,7 +124,8 @@
 
             <div id="fact"></div>
 
-            <button id="continueButton">
+            <button
+                id="continueButton">
                 CONTINUE
             </button>
 
@@ -85,25 +134,34 @@
     </div>
 
 
-    <!-- FINISH -->
+    <!-- ================= GAME OVER ================= -->
+
     <div id="gameOver">
+
+        <div class="completeIcon">
+            ❄
+        </div>
+
+        <p class="completeSmall">
+            ARCTIC RESEARCH NETWORK
+        </p>
 
         <h1>MISSION COMPLETE</h1>
 
-        <p id="finalScore"></p>
+        <p class="completeSubtitle">
+            ALL AVAILABLE DATA RECOVERED
+        </p>
+
+        <div id="finalScore"></div>
 
         <button onclick="location.reload()">
-            PLAY AGAIN
+            NEW EXPEDITION
         </button>
 
     </div>
 
 
-    <!-- THREE.JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-    <!-- OUR GAME -->
-    <script src="game.js"></script>
+    <script type="module" src="./game.js"></script>
 
 </body>
 </html>
