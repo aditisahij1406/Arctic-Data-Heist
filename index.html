@@ -9,45 +9,68 @@
 
 <body>
 
+    <!-- START SCREEN -->
     <div id="startScreen">
-        <div class="title">ARCTIC DATA HEIST</div>
+        <div class="snow">❄ ❄ ❄ ❄ ❄</div>
 
-        <div class="subtitle">
-            RECOVER THE LOST RESEARCH
-        </div>
+        <h1>ARCTIC DATA HEIST</h1>
 
-        <div class="mission">
-            <p>Three animal files have been corrupted.</p>
-            <p>Find them. Solve their puzzles. Recover the data.</p>
-        </div>
+        <h2>RECOVER THE LOST RESEARCH</h2>
 
-        <button id="startButton">
-            START EXPEDITION
-        </button>
+        <p>
+            Three animal files have been corrupted.<br>
+            Find the animals and recover their data.
+        </p>
+
+        <button id="startButton">START EXPEDITION</button>
 
         <div class="controls">
-            WASD — MOVE &nbsp; • &nbsp; MOUSE — LOOK &nbsp; • &nbsp; E — INVESTIGATE
+            WASD — MOVE &nbsp; | &nbsp; MOUSE — LOOK &nbsp; | &nbsp; E — INVESTIGATE
         </div>
     </div>
 
+
+    <!-- GAME HUD -->
     <div id="hud">
-        <div class="hudTitle">❄ ARCTIC DATA HEIST</div>
 
-        <div>DATA <span id="data">0</span>/3</div>
+        <div class="gameTitle">
+            ❄ ARCTIC DATA HEIST
+        </div>
 
-        <div>SCORE <span id="score">0</span></div>
+        <div>
+            DATA:
+            <span id="data">0</span>/3
+        </div>
 
-        <div>TIME <span id="time">90</span></div>
+        <div>
+            SCORE:
+            <span id="score">0</span>
+        </div>
+
+        <div>
+            TIME:
+            <span id="time">90</span>
+        </div>
+
     </div>
 
+
+    <!-- CROSSHAIR -->
     <div id="crosshair">+</div>
 
+
+    <!-- INTERACTION MESSAGE -->
+    <div id="interaction"></div>
+
+
+    <!-- PUZZLE -->
     <div id="puzzle">
+
         <div id="puzzleCard">
 
             <div id="animalName"></div>
 
-            <div id="question"></div>
+            <h2 id="question"></h2>
 
             <div id="answers"></div>
 
@@ -58,22 +81,29 @@
             </button>
 
         </div>
+
     </div>
 
-    <div id="gameOver">
-        <div class="gameOverTitle">
-            RESEARCH COMPLETE
-        </div>
 
-        <div id="finalScore"></div>
+    <!-- FINISH -->
+    <div id="gameOver">
+
+        <h1>MISSION COMPLETE</h1>
+
+        <p id="finalScore"></p>
 
         <button onclick="location.reload()">
-            NEW EXPEDITION
+            PLAY AGAIN
         </button>
+
     </div>
 
-    <!-- IMPORTANT: load game.js as a module -->
-    <script type="module" src="./game.js"></script>
+
+    <!-- THREE.JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- OUR GAME -->
+    <script src="game.js"></script>
 
 </body>
 </html>
